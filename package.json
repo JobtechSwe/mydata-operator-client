@@ -1,0 +1,53 @@
+{
+  "name": "@mydata/client",
+  "version": "0.1.0",
+  "description": "Client for MyData Operator",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "jest",
+    "watch": "jest --watchAll",
+    "build": "./node_modules/babel-cli/bin/babel.js src --out-dir lib",
+    "prepublish": "npm test && npm run lint && npm run build",
+    "lint": "eslint '**/*.js'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JobtechSwe/mydata-operator-client.git"
+  },
+  "contributors": [
+    "Adam Näslund <adam.naslund@iteam.se>",
+    "Einar Persson <einar.persson@iteam.se>",
+    "Johan Öbrink <johan.obrink@iteam.se>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/JobtechSwe/mydata-operator-client/issues"
+  },
+  "homepage": "https://github.com/JobtechSwe/mydata-operator-client#readme",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "jsonwebtoken": "^8.4.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-eslint": "^10.0.1",
+    "babel-preset-es2015": "^6.24.1",
+    "eslint": "^5.9.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-jest": "^22.0.0",
+    "eslint-plugin-node": "^8.0.0",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "jest": "^23.6.0"
+  },
+  "babel": {
+    "presets": [
+      "es2015"
+    ]
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "automock": false
+  }
+}
