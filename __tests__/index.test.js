@@ -1,27 +1,24 @@
-import * as client from '../src/index'
+import { createClient } from '../src/index'
 import axios from 'axios'
 import jwt from 'jsonwebtoken'
 jest.mock('axios')
 jest.mock('jsonwebtoken')
 
-const clientConfig = {
-  clientId: 'myclient123'
-}
-
 describe('client', () => {
-  beforeEach(() => {
-    client.init(clientConfig)
-  })
+  let client
 
-  afterEach(() => {
-    client.clearConfig()
+  beforeEach(() => {
+    client = createClient({
+      clientId: 'myclient123',
+      operatorUrl: 'http://test-operator.mydata.work'
+    })
   })
 
   describe('#getLoginUrl', () => {
     it('returns correct url', () => {
       const loginUrl = client.getLoginUrl('myredirecturi')
 
-      expect(loginUrl).toBe('http://operator.mydata.work/login?redirect_uri=myredirecturi&client_id=myclient123')
+      expect(loginUrl).toBe('http://test-operator.mydata.work/login?redirect_uri=myredirecturi&client_id=myclient123')
     })
   })
 
