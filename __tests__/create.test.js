@@ -17,6 +17,11 @@ describe('client', () => {
         modulusLength: 1024,
         publicKeyEncoding: { type: 'pkcs1', format: 'pem' },
         privateKeyEncoding: { type: 'pkcs1', format: 'pem' }
+      }),
+      encrypt: generateKeyPairSync('rsa', {
+        modulusLength: 1024,
+        publicKeyEncoding: { type: 'pkcs1', format: 'pem' },
+        privateKeyEncoding: { type: 'pkcs1', format: 'pem' }
       })
     }
     config = {
@@ -27,7 +32,10 @@ describe('client', () => {
       jwksUrl: '/jwks',
       clientKeys: keys.client,
       signKeyProvider: async () => {
-        return [{kid: 'sign', key: keys.sign.publicKey}]
+        return [{ kid: 'sign', key: keys.sign.publicKey }]
+      },
+      encryptKeyProvider: async () => {
+        return [{ kid: 'encrypt', key: keys.encrypt.publicKey }]
       }
     }
   })
@@ -84,6 +92,14 @@ describe('client', () => {
             alg: 'RS256',
             kty: 'RSA',
             use: 'sig',
+            e: 'AQAB',
+            n: expect.any(String)
+          },
+          {
+            kid: 'encrypt',
+            alg: 'RS256',
+            kty: 'RSA',
+            use: 'enc',
             e: 'AQAB',
             n: expect.any(String)
           }
