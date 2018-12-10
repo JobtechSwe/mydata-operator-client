@@ -12,6 +12,11 @@ describe('client', () => {
         modulusLength: 1024,
         publicKeyEncoding: { type: 'pkcs1', format: 'pem' },
         privateKeyEncoding: { type: 'pkcs1', format: 'pem' }
+      }),
+      sign: generateKeyPairSync('rsa', {
+        modulusLength: 1024,
+        publicKeyEncoding: { type: 'pkcs1', format: 'pem' },
+        privateKeyEncoding: { type: 'pkcs1', format: 'pem' }
       })
     }
     config = {
@@ -20,7 +25,10 @@ describe('client', () => {
       clientId: 'mycv.work',
       operator: 'https://smoothoperator.work',
       jwksUrl: '/jwks',
-      clientKeys: keys.client
+      clientKeys: keys.client,
+      signKeyProvider: async () => {
+        return [{kid: 'sign', key: keys.sign.publicKey}]
+      }
     }
   })
   afterEach(() => {
@@ -65,6 +73,14 @@ describe('client', () => {
         keys: [
           {
             kid: 'client_key',
+            alg: 'RS256',
+            kty: 'RSA',
+            use: 'sig',
+            e: 'AQAB',
+            n: expect.any(String)
+          },
+          {
+            kid: 'sign',
             alg: 'RS256',
             kty: 'RSA',
             use: 'sig',
