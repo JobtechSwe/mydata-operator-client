@@ -17,7 +17,7 @@ describe('client', () => {
     config = {
       name: 'CV app',
       description: 'A CV app',
-      clientId: 'https://mycv',
+      clientId: 'mycv.work',
       operator: 'https://smoothoperator.work',
       jwksUrl: '/jwks',
       clientKeys: keys.client
@@ -38,7 +38,7 @@ describe('client', () => {
         data: {
           name: 'CV app',
           description: 'A CV app',
-          clientId: 'https://mycv',
+          clientId: 'mycv.work',
           jwksUrl: '/jwks'
         },
         signature: expect.any(String)
@@ -52,6 +52,27 @@ describe('client', () => {
         .verify(keys.client.publicKey, signature, 'base64')
 
       expect(verified).toEqual(true)
+    })
+  })
+  describe('/jwks', () => {
+    it('contains the client_key', async () => {
+      const client = create(config)
+      const res = { send: jest.fn().mockName('send') }
+      const next = jest.fn().mockName('next')
+      await client.routes.jwks()({}, res)
+
+      expect(res.send).toHaveBeenCalledWith({
+        keys: [
+          {
+            kid: 'client_key',
+            alg: 'RS256',
+            kty: 'RSA',
+            use: 'sig',
+            e: 'AQAB',
+            n: expect.any(String)
+          }
+        ]
+      })
     })
   })
 })

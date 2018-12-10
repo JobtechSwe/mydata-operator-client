@@ -19,3 +19,10 @@ const config = {
 }
 const client = operator(config)
 ```
+
+## Provide jwks route
+```javascript
+const express = require('express')
+const app = express()
+app.get('/jwks', client.routes.jwks())
+```
