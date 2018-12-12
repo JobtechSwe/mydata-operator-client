@@ -40,6 +40,7 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "automock": false
+    "automock": false,
+    "clearMocks": true
   }
 }

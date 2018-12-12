@@ -25,7 +25,7 @@ describe('client', () => {
       })
     }
     config = {
-      name: 'CV app',
+      displayName: 'CV app',
       description: 'A CV app',
       clientId: 'mycv.work',
       operator: 'https://smoothoperator.work',
@@ -46,13 +46,13 @@ describe('client', () => {
   describe('create', () => {
     it('calls the operator to register the client service', () => {
       create(config)
-      expect(axios.post).toHaveBeenCalledWith('https://smoothoperator.work/clients', expect.any(Object))
+      expect(axios.post).toHaveBeenCalledWith('https://smoothoperator.work/api/clients', expect.any(Object))
     })
     it('sends correct parameters', () => {
       create(config)
       expect(axios.post).toHaveBeenCalledWith(expect.any(String), {
         data: {
-          name: 'CV app',
+          displayName: 'CV app',
           description: 'A CV app',
           clientId: 'mycv.work',
           jwksUrl: '/jwks'
@@ -74,7 +74,6 @@ describe('client', () => {
     it('contains the client_key', async () => {
       const client = create(config)
       const res = { send: jest.fn().mockName('send') }
-      const next = jest.fn().mockName('next')
       await client.routes.jwks()({}, res)
 
       expect(res.send).toHaveBeenCalledWith({
@@ -86,7 +85,7 @@ describe('client', () => {
             use: 'sig',
             e: 'AQAB',
             n: expect.any(String)
-          },
+          }/* ,
           {
             kid: 'sign',
             alg: 'RS256',
@@ -102,7 +101,7 @@ describe('client', () => {
             use: 'enc',
             e: 'AQAB',
             n: expect.any(String)
-          }
+          } */
         ]
       })
     })
