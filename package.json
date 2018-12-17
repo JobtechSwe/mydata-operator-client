@@ -6,7 +6,10 @@
   "scripts": {
     "test": "jest",
     "watch": "jest --watchAll",
-    "prepublishOnly": "npm test && npm run lint && npm run build",
+    "prepublishOnly": "npm test && npm run lint",
+    "patch-release": "npm version patch && npm publish && git push origin master --follow-tags",
+    "minor-release": "npm version minor && npm publish && git push origin master --follow-tags",
+    "major-release": "npm version major && npm publish && git push origin master --follow-tags",
     "lint": "eslint '**/*.js'"
   },
   "repository": {
