@@ -28,8 +28,10 @@
   "homepage": "https://github.com/JobtechSwe/mydata-operator-client#readme",
   "dependencies": {
     "axios": "^0.18.0",
+    "joi": "^14.3.0",
     "jsonwebtoken": "^8.4.0",
-    "node-rsa": "^1.0.1"
+    "node-rsa": "^1.0.1",
+    "ramda": "^0.26.1"
   },
   "devDependencies": {
     "eslint": "^5.9.0",

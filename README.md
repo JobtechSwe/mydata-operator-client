@@ -33,9 +33,17 @@ app.get('/jwks', client.routes.jwks)
 app.post('/consents', client.routes.consents) // This url is currently hard coded, i.e. it has to be http://example.com/consents
 ```
 
-## Subscribe to consent changes
+## Subscribe to events
 ```javascript
-client.events.consents.on('consent', consent => {
+client.events.on('CONSENT_APPROVED', consent => {
   // store your consent here and take action (eg. redirect user)
 })
+```
+
+### Consent format
+```javascript
+{
+  id: '78c2b714-222f-42fa-8ffa-ff0d6366c856', // uuid for consent
+  scope: ['something']
+}
 ```
