@@ -9,13 +9,16 @@ Client library for mydata operator
 const { readFileSync } = require('fs')
 const operator = require('@mydata/operator-client')
 
-const clientId = 'b311d654-6179-49f6-abc9-037ef758c6ef' // Application id, obtained by registering with Operator
-const operatorUrl = 'https://smoothoperator.work' // URL of Operator
-const clientKey = readFileSync('./keys/applicationPublicClientKey.pem', 'utf8') // Key for signing requests, counterpart of public key registered with operator
 const config = {
-  clientId,
-  operatorUrl,
-  clientKey
+  displayName: 'The name of your service',
+  description: 'A nice description of your fantastic service'
+  clientId: 'b311d654-6179-49f6-abc9-037ef758c6ef', // Application id, obtained by registering with Operator
+  operatorUrl: 'https://smoothoperator.work', // URL of Operator
+  clientKeys: {
+    publicKey: '',
+    privateKey: ''
+  }
+  jwksUrl: '/jwks'
 }
 const client = operator(config)
 ```
@@ -24,5 +27,23 @@ const client = operator(config)
 ```javascript
 const express = require('express')
 const app = express()
-app.get('/jwks', client.routes.jwks())
+
+// Routes used by the operator
+app.get('/jwks', client.routes.jwks)
+app.post('/consents', client.routes.consents) // This url is currently hard coded, i.e. it has to be http://example.com/consents
+```
+
+## Subscribe to events
+```javascript
+client.events.on('CONSENT_APPROVED', consent => {
+  // store your consent here and take action (eg. redirect user)
+})
+```
+
+### Consent format
+```javascript
+{
+  id: '78c2b714-222f-42fa-8ffa-ff0d6366c856', // uuid for consent
+  scope: ['something']
+}
 ```

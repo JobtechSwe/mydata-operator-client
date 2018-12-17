@@ -16,7 +16,7 @@ describe('consents', () => {
   }
 
   const dummyConsent = {
-    scope: 'asddsa'
+    scope: ['everything']
   }
 
   const dummyResponse = {
@@ -37,7 +37,7 @@ describe('consents', () => {
       await request(config)(dummyConsent)
 
       expect(axios.post).toHaveBeenCalledTimes(1)
-      expect(axios.post).toHaveBeenCalledWith(`${config.operator}/api/consents/requests`, dummyConsent)
+      expect(axios.post).toHaveBeenCalledWith(`${config.operator}/api/consents/requests`, { client_id: 'https://mycv.com', scope: ['everything'] })
     })
 
     it('unwraps response and returns code', async () => {
