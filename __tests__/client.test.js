@@ -74,7 +74,7 @@ describe('client', () => {
     it('contains the client_key', async () => {
       const client = create(config)
       const res = { send: jest.fn().mockName('send') }
-      await client.routes.jwks()({}, res)
+      await client.routes.jwks({}, res)
 
       expect(res.send).toHaveBeenCalledWith({
         keys: [
