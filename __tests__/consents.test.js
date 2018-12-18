@@ -1,47 +1,72 @@
-const { request } = require('../lib/consents')
+const createClient = require('../lib/client')
+const MemoryKeyStore = require('../lib/memoryKeyStore')
+const { generateKeyPairSync } = require('crypto')
 const axios = require('axios')
 jest.mock('axios')
 
 describe('consents', () => {
-  const config = {
-    displayName: 'My CV',
-    description: 'An app for your CV online',
-    clientId: 'https://mycv.com',
-    operator: 'https://operator.work',
-    jwksUrl: '/jwks',
-    clientKeys: {
-      publicKey: 'uhahsdiuashdiuasd',
-      privateKey: 'asdiuhas'
+  let client, dummyRequest, dummyResponse
+
+  beforeEach(() => {
+    const clientKeys = generateKeyPairSync('rsa', {
+      modulusLength: 1024,
+      publicKeyEncoding: { type: 'pkcs1', format: 'pem' },
+      privateKeyEncoding: { type: 'pkcs1', format: 'pem' }
+    })
+    const config = {
+      displayName: 'CV app',
+      description: 'A CV app',
+      clientId: 'https://mycv.work',
+      operator: 'https://smoothoperator.work',
+      jwksUrl: '/jwks',
+      clientKeys: clientKeys,
+      keyStore: new MemoryKeyStore(),
+      keyOptions: { modulusLength: 1024 }
     }
-  }
+    client = createClient(config)
 
-  const dummyConsent = {
-    scope: ['everything']
-  }
+    dummyRequest = {
+      scope: ['everything']
+    }
 
-  const dummyResponse = {
-    data: {
+    dummyResponse = {
       data: {
-        code: '4445',
-        expires: 345678
+        data: {
+          code: '4445',
+          expires: 345678
+        }
       }
     }
-  }
+  })
+  afterEach(() => {
+    axios.post.mockClear()
+  })
 
   describe('#request', () => {
     beforeEach(() => {
       axios.post.mockResolvedValue(dummyResponse)
     })
-
-    it('calls axios.post with correct url', async () => {
-      await request(config)(dummyConsent)
-
-      expect(axios.post).toHaveBeenCalledTimes(1)
-      expect(axios.post).toHaveBeenCalledWith(`${config.operator}/api/consents/requests`, { client_id: 'https://mycv.com', scope: ['everything'] })
+    it('calls operator with correct url', async () => {
+      await client.consents.request(dummyRequest)
+      expect(axios.post).toHaveBeenLastCalledWith(`${client.operator}/api/consents/requests`, expect.any(Object))
     })
-
+    it('calls operator with correct payload', async () => {
+      await client.consents.request(dummyRequest)
+      const expectedPayload = {
+        data: {
+          client_id: 'https://mycv.work',
+          scope: ['everything'],
+          kid: expect.any(String)
+        },
+        signature: {
+          kid: 'client_key',
+          data: expect.any(String)
+        }
+      }
+      expect(axios.post).toHaveBeenLastCalledWith(expect.any(String), expectedPayload)
+    })
     it('unwraps response and returns code', async () => {
-      const { code } = await request(config)(dummyConsent)
+      const { code } = await client.consents.request(dummyRequest)
 
       expect(code).toBe('4445')
     })
