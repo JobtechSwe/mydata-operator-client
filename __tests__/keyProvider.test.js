@@ -19,12 +19,12 @@ describe('KeyProvider', () => {
   describe('#getKeys', () => {
     it('calls load with type', async () => {
       await keyProvider.getKeys({ use: 'enc' })
-      expect(keyStore.load).toHaveBeenCalledWith({use: 'enc'})
+      expect(keyStore.load).toHaveBeenCalledWith({ use: 'enc' })
     })
     it('returns all keys', async () => {
-      keyStore.load.mockResolvedValue([{kid: 'abc'}])
+      keyStore.load.mockResolvedValue([{ kid: 'abc' }])
       const result = await keyProvider.getKeys({ use: 'enc' })
-      expect(result).toEqual([{kid: 'abc'}])
+      expect(result).toEqual([{ kid: 'abc' }])
     })
   })
   describe('#getKey', () => {
@@ -67,7 +67,7 @@ describe('KeyProvider', () => {
   describe('#jwks', () => {
     it('returns a jwks formatted list of all keys', async () => {
       const enc = await keyProvider.generate({ use: 'enc' })
-      const sig = await keyProvider.generate({use: 'sig'})
+      const sig = await keyProvider.generate({ use: 'sig' })
 
       keyStore.load.mockResolvedValueOnce([enc])
       keyStore.load.mockResolvedValueOnce([sig])

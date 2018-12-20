@@ -7,7 +7,7 @@ describe('MemoryKeyStore', () => {
   })
   it('returns keys', async () => {
     expect(await storage.load({ use: 'enc' })).toEqual([])
-    expect(await storage.load({use: 'sig'})).toEqual([])
+    expect(await storage.load({ use: 'sig' })).toEqual([])
   })
   it('stores an enc key and returns it', async () => {
     const key = { use: 'enc', kid: 'enc1' }
@@ -46,4 +46,3 @@ describe('MemoryKeyStore', () => {
     expect(await storage.load({ use: 'sig' })).toEqual([sigKey2])
   })
 })
-
