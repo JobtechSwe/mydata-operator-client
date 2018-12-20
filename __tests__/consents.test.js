@@ -26,7 +26,12 @@ describe('consents', () => {
     client = createClient(config)
 
     dummyRequest = {
-      scope: ['everything']
+      scope: [
+        { area: 'experience', reason: 'För att kunna bygga ditt CV' },
+        { area: 'education', reason: 'För att kunna bygga ditt CV' },
+        { area: 'languages', reason: 'För att kunna bygga ditt CV' },
+        { namespace: 'personal', area: 'info', reason: 'För att kunna göra ditt CV mer personligt' }
+      ]
     }
 
     dummyResponse = {
@@ -55,7 +60,7 @@ describe('consents', () => {
       const expectedPayload = {
         data: {
           client_id: 'https://mycv.work',
-          scope: ['everything'],
+          scope: dummyRequest.scope,
           kid: expect.any(String)
         },
         signature: {

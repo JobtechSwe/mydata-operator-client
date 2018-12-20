@@ -1,6 +1,6 @@
 const createClient = require('../lib/client')
 const MemoryKeyStore = require('../lib/memoryKeyStore')
-const { generateKeyPairSync, createVerify } = require('crypto')
+const { generateKeyPairSync } = require('crypto')
 jest.mock('axios')
 
 describe('routes', () => {
