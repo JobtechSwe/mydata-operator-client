@@ -19,6 +19,7 @@ describe('client', () => {
       clientId: 'mycv.work',
       operator: 'https://smoothoperator.work',
       jwksUrl: '/jwks',
+      eventsUrl: '/events',
       clientKeys: clientKeys,
       keyStore: new MemoryKeyStore(),
       keyOptions: { modulusLength: 1024 }

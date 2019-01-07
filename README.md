@@ -12,25 +12,25 @@ const operator = require('@mydata/operator-client')
 const config = {
   displayName: 'The name of your service',
   description: 'A nice description of your fantastic service'
-  clientId: 'b311d654-6179-49f6-abc9-037ef758c6ef', // Application id, obtained by registering with Operator
+  clientId: 'mycv.work', // Application domain without protocol
   operatorUrl: 'https://smoothoperator.work', // URL of Operator
   clientKeys: {
     publicKey: '',
     privateKey: ''
   }
-  jwksUrl: '/jwks'
+  jwksUrl: '/jwks',     // endpoint for keys in jwks format
+  eventsUrl: '/events'  // endpoint for events - webhook style
 }
 const client = operator(config)
 ```
 
-## Provide jwks route
+## Provide routes
 ```javascript
 const express = require('express')
 const app = express()
 
 // Routes used by the operator
-app.get('/jwks', client.routes.jwks)
-app.post('/consents', client.routes.consents) // This url is currently hard coded, i.e. it has to be http://example.com/consents
+app.use(client.routes)
 ```
 
 ## Subscribe to events
