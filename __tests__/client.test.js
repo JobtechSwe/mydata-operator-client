@@ -44,7 +44,44 @@ describe('client', () => {
           displayName: 'CV app',
           description: 'A CV app',
           clientId: 'mycv.work',
-          jwksUrl: '/jwks'
+          jwksUrl: '/jwks',
+          eventsUrl: '/events'
+        },
+        signature: {
+          data: expect.any(String),
+          kid: 'client_key'
+        }
+      })
+    })
+    it('signs the payload', () => {
+      createClient(config)
+      const [, { data, signature }] = axios.post.mock.calls[0]
+      const verified = createVerify('RSA-SHA256')
+        .update(JSON.stringify(data))
+        .verify(clientKeys.publicKey, signature.data, 'base64')
+
+      expect(verified).toEqual(true)
+    })
+  })
+  describe('unsafe createClient', () => {
+    beforeEach((done) => {
+      axios.post.mockResolvedValueOnce({})
+      config.unsafe = true
+      const client = createClient(config)
+      client.on('connect', () => done())
+    })
+    it('calls the operator to register the client service', () => {
+      expect(axios.post).toHaveBeenCalledWith('https://smoothoperator.work/api/clients', expect.any(Object))
+    })
+    it('sends correct parameters', () => {
+      expect(axios.post).toHaveBeenCalledWith(expect.any(String), {
+        data: {
+          displayName: 'CV app',
+          description: 'A CV app',
+          clientId: 'mycv.work',
+          jwksUrl: '/jwks',
+          eventsUrl: '/events',
+          unsafe: true
         },
         signature: {
           data: expect.any(String),
