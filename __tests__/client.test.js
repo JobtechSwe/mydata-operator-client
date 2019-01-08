@@ -30,45 +30,54 @@ describe('client', () => {
   })
 
   describe('createClient', () => {
+    let client
     beforeEach((done) => {
       axios.post.mockResolvedValueOnce({})
-      const client = createClient(config)
-      client.on('connect', () => done())
+      client = createClient(config)
+      setTimeout(() => done(), 10)
     })
-    it('calls the operator to register the client service', () => {
-      expect(axios.post).toHaveBeenCalledWith('https://smoothoperator.work/api/clients', expect.any(Object))
+    it('does _not_ call the operator to register until told so', () => {
+      expect(axios.post).not.toHaveBeenCalled()
     })
-    it('sends correct parameters', () => {
-      expect(axios.post).toHaveBeenCalledWith(expect.any(String), {
-        data: {
-          displayName: 'CV app',
-          description: 'A CV app',
-          clientId: 'mycv.work',
-          jwksUrl: '/jwks',
-          eventsUrl: '/events'
-        },
-        signature: {
-          data: expect.any(String),
-          kid: 'client_key'
-        }
+    describe('#connect()', () => {
+      beforeEach(async () => {
+        await client.connect()
       })
-    })
-    it('signs the payload', () => {
-      createClient(config)
-      const [, { data, signature }] = axios.post.mock.calls[0]
-      const verified = createVerify('RSA-SHA256')
-        .update(JSON.stringify(data))
-        .verify(clientKeys.publicKey, signature.data, 'base64')
+      it('calls the operator to register the client service', () => {
+        expect(axios.post).toHaveBeenCalledWith('https://smoothoperator.work/api/clients', expect.any(Object))
+      })
+      it('sends correct parameters', () => {
+        expect(axios.post).toHaveBeenCalledWith(expect.any(String), {
+          data: {
+            displayName: 'CV app',
+            description: 'A CV app',
+            clientId: 'mycv.work',
+            jwksUrl: '/jwks',
+            eventsUrl: '/events'
+          },
+          signature: {
+            data: expect.any(String),
+            kid: 'client_key'
+          }
+        })
+      })
+      it('signs the payload', () => {
+        createClient(config)
+        const [, { data, signature }] = axios.post.mock.calls[0]
+        const verified = createVerify('RSA-SHA256')
+          .update(JSON.stringify(data))
+          .verify(clientKeys.publicKey, signature.data, 'base64')
 
-      expect(verified).toEqual(true)
+        expect(verified).toEqual(true)
+      })
     })
   })
   describe('unsafe createClient', () => {
-    beforeEach((done) => {
+    beforeEach(async () => {
       axios.post.mockResolvedValueOnce({})
       config.unsafe = true
       const client = createClient(config)
-      client.on('connect', () => done())
+      await client.connect()
     })
     it('calls the operator to register the client service', () => {
       expect(axios.post).toHaveBeenCalledWith('https://smoothoperator.work/api/clients', expect.any(Object))
