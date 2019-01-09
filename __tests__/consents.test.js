@@ -16,7 +16,7 @@ describe('consents', () => {
     const config = {
       displayName: 'CV app',
       description: 'A CV app',
-      clientId: 'https://mycv.work',
+      clientId: 'mycv.work',
       operator: 'https://smoothoperator.work',
       jwksUrl: '/jwks',
       eventsUrl: '/events',
@@ -27,12 +27,18 @@ describe('consents', () => {
     client = createClient(config)
 
     dummyRequest = {
-      scope: [
-        { area: 'experience', reason: 'För att kunna bygga ditt CV' },
-        { area: 'education', reason: 'För att kunna bygga ditt CV' },
-        { area: 'languages', reason: 'För att kunna bygga ditt CV' },
-        { namespace: 'personal', area: 'info', reason: 'För att kunna göra ditt CV mer personligt' }
-      ]
+      scope:
+        [{
+          domain: 'localhost:4000',
+          area: 'cv',
+          description:
+            'A list of your work experiences, educations, language proficiencies and so on that you have entered in the service.',
+          permissions: ['write'],
+          purpose: 'In order to create a CV using our website.',
+          lawfulBasis: 'CONSENT',
+          required: true
+        }],
+      expiry: 1549704812
     }
 
     dummyResponse = {
@@ -54,14 +60,14 @@ describe('consents', () => {
     })
     it('calls operator with correct url', async () => {
       await client.consents.request(dummyRequest)
-      expect(axios.post).toHaveBeenLastCalledWith(`${client.operator}/api/consents/requests`, expect.any(Object))
+      expect(axios.post).toHaveBeenLastCalledWith(`https://smoothoperator.work/api/consents/requests`, expect.any(Object))
     })
     it('calls operator with correct payload', async () => {
       await client.consents.request(dummyRequest)
       const expectedPayload = {
         data: {
-          client_id: 'https://mycv.work',
-          scope: dummyRequest.scope,
+          ...dummyRequest,
+          clientId: 'mycv.work',
           kid: expect.any(String)
         },
         signature: {
