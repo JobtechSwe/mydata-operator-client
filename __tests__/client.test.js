@@ -39,6 +39,27 @@ describe('client', () => {
     it('does _not_ call the operator to register until told so', () => {
       expect(axios.post).not.toHaveBeenCalled()
     })
+    it('sets sensible defaults', () => {
+      const {
+        displayName,
+        description,
+        clientId,
+        operator,
+        clientKeys,
+        keyStore
+      } = config
+      client = createClient({
+        displayName,
+        description,
+        clientId,
+        operator,
+        clientKeys,
+        keyStore
+      })
+      expect(client.config.jwksUrl).toEqual('/jwks')
+      expect(client.config.eventsUrl).toEqual('/events')
+      expect(client.config.alg).toEqual('RSA-SHA512')
+    })
     describe('#connect()', () => {
       beforeEach(async () => {
         await client.connect()
@@ -57,7 +78,7 @@ describe('client', () => {
           },
           signature: {
             data: expect.any(String),
-            alg: 'RSA-SHA256',
+            alg: 'RSA-SHA512',
             kid: 'client_key'
           }
         })
@@ -94,7 +115,7 @@ describe('client', () => {
           unsafe: true
         },
         signature: {
-          alg: 'RSA-SHA256',
+          alg: 'RSA-SHA512',
           data: expect.any(String),
           kid: 'client_key'
         }
