@@ -57,6 +57,7 @@ describe('client', () => {
           },
           signature: {
             data: expect.any(String),
+            alg: 'RSA-SHA256',
             kid: 'client_key'
           }
         })
@@ -64,7 +65,7 @@ describe('client', () => {
       it('signs the payload', () => {
         createClient(config)
         const [, { data, signature }] = axios.post.mock.calls[0]
-        const verified = createVerify('RSA-SHA256')
+        const verified = createVerify(signature.alg)
           .update(JSON.stringify(data))
           .verify(clientKeys.publicKey, signature.data, 'base64')
 
@@ -93,6 +94,7 @@ describe('client', () => {
           unsafe: true
         },
         signature: {
+          alg: 'RSA-SHA256',
           data: expect.any(String),
           kid: 'client_key'
         }
@@ -101,7 +103,7 @@ describe('client', () => {
     it('signs the payload', () => {
       createClient(config)
       const [, { data, signature }] = axios.post.mock.calls[0]
-      const verified = createVerify('RSA-SHA256')
+      const verified = createVerify(signature.alg)
         .update(JSON.stringify(data))
         .verify(clientKeys.publicKey, signature.data, 'base64')
 
