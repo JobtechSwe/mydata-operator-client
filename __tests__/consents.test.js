@@ -71,7 +71,7 @@ describe('consents', () => {
           kid: expect.any(String)
         },
         signature: {
-          alg: 'RSA-SHA256',
+          alg: 'RSA-SHA512',
           kid: 'client_key',
           data: expect.any(String)
         }
