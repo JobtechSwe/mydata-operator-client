@@ -40,13 +40,12 @@ describe('client', () => {
       expect(axios.post).not.toHaveBeenCalled()
     })
     describe('#connect()', () => {
-      beforeEach(async () => {
+      it('calls the operator to register the client service', async () => {
         await client.connect()
-      })
-      it('calls the operator to register the client service', () => {
         expect(axios.post).toHaveBeenCalledWith('https://smoothoperator.work/api/clients', expect.any(Object))
       })
-      it('sends correct parameters', () => {
+      it('sends correct parameters', async () => {
+        await client.connect()
         expect(axios.post).toHaveBeenCalledWith(expect.any(String), {
           data: {
             displayName: 'CV app',
@@ -61,8 +60,14 @@ describe('client', () => {
           }
         })
       })
-      it('signs the payload', () => {
-        createClient(config)
+      it('calls events.emit with payload', async () => {
+        client.events.emit = jest.fn()
+        await client.connect()
+        expect(client.events.emit).toHaveBeenCalledTimes(1)
+      })
+
+      it('signs the payload', async () => {
+        await client.connect()
         const [, { data, signature }] = axios.post.mock.calls[0]
         const verified = createVerify('RSA-SHA256')
           .update(JSON.stringify(data))
@@ -106,6 +111,23 @@ describe('client', () => {
         .verify(clientKeys.publicKey, signature.data, 'base64')
 
       expect(verified).toEqual(true)
+    })
+  })
+
+  describe('#onConsentApproved', () => {
+    it('removes key with matching kid from keystore', async () => {
+      const client = createClient(config)
+      const key = {
+        kid: 'foo'
+      }
+      await client.keyProvider.keyStore.save(key)
+
+      const payload = { kid: 'foo' }
+      client.events.emit('CONSENT_APPROVED', payload)
+
+      const res = await client.keyProvider.keyStore.load({ kid: 'foo' })
+
+      expect(res).toEqual([])
     })
   })
 })
