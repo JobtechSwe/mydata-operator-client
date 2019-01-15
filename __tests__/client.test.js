@@ -39,6 +39,27 @@ describe('client', () => {
     it('does _not_ call the operator to register until told so', () => {
       expect(axios.post).not.toHaveBeenCalled()
     })
+    it('sets sensible defaults', () => {
+      const {
+        displayName,
+        description,
+        clientId,
+        operator,
+        clientKeys,
+        keyStore
+      } = config
+      client = createClient({
+        displayName,
+        description,
+        clientId,
+        operator,
+        clientKeys,
+        keyStore
+      })
+      expect(client.config.jwksUrl).toEqual('/jwks')
+      expect(client.config.eventsUrl).toEqual('/events')
+      expect(client.config.alg).toEqual('RSA-SHA512')
+    })
     describe('#connect()', () => {
       it('calls the operator to register the client service', async () => {
         await client.connect()
@@ -56,6 +77,7 @@ describe('client', () => {
           },
           signature: {
             data: expect.any(String),
+            alg: 'RSA-SHA512',
             kid: 'client_key'
           }
         })
@@ -69,7 +91,7 @@ describe('client', () => {
       it('signs the payload', async () => {
         await client.connect()
         const [, { data, signature }] = axios.post.mock.calls[0]
-        const verified = createVerify('RSA-SHA256')
+        const verified = createVerify(signature.alg)
           .update(JSON.stringify(data))
           .verify(clientKeys.publicKey, signature.data, 'base64')
 
@@ -98,6 +120,7 @@ describe('client', () => {
           unsafe: true
         },
         signature: {
+          alg: 'RSA-SHA512',
           data: expect.any(String),
           kid: 'client_key'
         }
@@ -106,7 +129,7 @@ describe('client', () => {
     it('signs the payload', () => {
       createClient(config)
       const [, { data, signature }] = axios.post.mock.calls[0]
-      const verified = createVerify('RSA-SHA256')
+      const verified = createVerify(signature.alg)
         .update(JSON.stringify(data))
         .verify(clientKeys.publicKey, signature.data, 'base64')
 
