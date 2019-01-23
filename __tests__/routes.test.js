@@ -102,6 +102,7 @@ describe('routes', () => {
           e: 'AQAB',
           n: expect.any(String)
         })
+      })
     })
   })
   describe('/events', () => {
