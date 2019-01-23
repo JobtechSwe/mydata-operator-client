@@ -31,7 +31,7 @@
     "joi": "^14.3.0",
     "jsonwebtoken": "^8.4.0",
     "jwks-provider": "^0.1.0",
-    "moment": "^2.23.0",
+    "moment": "^2.24.0",
     "ramda": "^0.26.1"
   },
   "devDependencies": {
