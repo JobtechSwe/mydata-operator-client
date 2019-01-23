@@ -64,7 +64,7 @@ describe('KeyProvider', () => {
       expect(keyStore.remove).toHaveBeenCalledWith('abcd')
     })
   })
-  describe('#jwks', () => {
+  describe('#jwksKeyList', () => {
     it('returns a jwks formatted list of all keys', async () => {
       const enc = await keyProvider.generate({ use: 'enc' })
       const sig = await keyProvider.generate({ use: 'sig' })
@@ -72,7 +72,7 @@ describe('KeyProvider', () => {
       keyStore.load.mockResolvedValueOnce([enc])
       keyStore.load.mockResolvedValueOnce([sig])
 
-      const result = await keyProvider.jwks()
+      const result = await keyProvider.jwksKeyList()
       expect(result).toEqual({
         keys: [
           {
@@ -100,6 +100,23 @@ describe('KeyProvider', () => {
             e: 'AQAB'
           }
         ]
+      })
+    })
+  })
+  describe('#jwksKey', () => {
+    it('returns a single jwks formatted key', async () => {
+      const testKey = await keyProvider.generate({ use: 'enc', kid: 'test_key' })
+
+      keyStore.load.mockResolvedValueOnce([testKey])
+
+      const result = await keyProvider.jwksKey('test_key')
+      expect(result).toEqual({
+        kid: 'test_key',
+        use: 'enc',
+        alg: 'RS256',
+        kty: 'RSA',
+        n: expect.any(String),
+        e: 'AQAB'
       })
     })
   })

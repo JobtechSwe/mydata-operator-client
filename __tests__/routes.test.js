@@ -88,6 +88,21 @@ describe('routes', () => {
         ]
       })
     })
+    describe('/:kid', () => {
+      it('contains client_key, enc keys and sig keys', async () => {
+        await client.keyProvider.generate({ use: 'enc', kid: 'test_key' })
+
+        const res = await request(app).get('/jwks/test_key')
+
+        expect(res.body).toEqual({
+          kid: 'test_key',
+          alg: 'RS256',
+          kty: 'RSA',
+          use: 'enc',
+          e: 'AQAB',
+          n: expect.any(String)
+        })
+    })
   })
   describe('/events', () => {
     let body
