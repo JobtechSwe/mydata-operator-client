@@ -33,7 +33,7 @@ describe('consents', () => {
           area: 'cv',
           description:
             'A list of your work experiences, educations, language proficiencies and so on that you have entered in the service.',
-          permissions: ['write'],
+          permissions: ['WRITE'],
           purpose: 'In order to create a CV using our website.',
           lawfulBasis: 'CONSENT',
           required: true
@@ -57,6 +57,28 @@ describe('consents', () => {
   describe('#request', () => {
     beforeEach(() => {
       axios.post.mockResolvedValue(dummyResponse)
+    })
+    describe('validation', () => {
+      it('throws if scope is missing', () => {
+        dummyRequest.scope = undefined
+        return expect(client.consents.request(dummyRequest))
+          .rejects.toThrow(/\["scope" is required\]/)
+      })
+      it('throws if expiry is missing', () => {
+        dummyRequest.expiry = undefined
+        return expect(client.consents.request(dummyRequest))
+          .rejects.toThrow(/\["expiry" is required\]/)
+      })
+      it('fixes casing of permissions', () => {
+        dummyRequest.scope[0].permissions = ['write']
+        return expect(client.consents.request(dummyRequest))
+          .resolves.not.toThrow()
+      })
+      it('fixes casing of lawfulBasis', () => {
+        dummyRequest.scope[0].lawfulBasis = 'legalObligation'
+        return expect(client.consents.request(dummyRequest))
+          .resolves.not.toThrow()
+      })
     })
     it('calls operator with correct url', async () => {
       await client.consents.request(dummyRequest)

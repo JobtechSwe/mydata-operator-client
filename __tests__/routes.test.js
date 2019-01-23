@@ -101,9 +101,9 @@ describe('routes', () => {
             domain: 'cv.work',
             area: 'education',
             description: 'Stuff',
-            permissions: ['read', 'write'],
+            permissions: ['READ', 'WRITE'],
             purpose: 'because',
-            lawfulBasis: 'consent'
+            lawfulBasis: 'CONSENT'
           }]
         }
       }
@@ -203,7 +203,7 @@ describe('routes', () => {
         const response = await request(app).post('/events').send(body)
 
         expect(response.status).toEqual(400)
-        expect(response.body.message).toMatch('must be one of [read, write]')
+        expect(response.body.message).toMatch('must be one of [READ, WRITE]')
       })
       it('throws if `scope` does not contain `purpose`', async () => {
         body.payload.scope[0].purpose = undefined
@@ -224,7 +224,7 @@ describe('routes', () => {
         const response = await request(app).post('/events').send(body)
 
         expect(response.status).toEqual(400)
-        expect(response.body.message).toMatch('["lawfulBasis" must be one of [consent, legitimateInterests, publicInterest, contractualNecessity, legalObligations, vitalInterests]]')
+        expect(response.body.message).toMatch('["lawfulBasis" must be one of [CONSENT, CONTRACT, LEGAL_OBLIGATION, VITAL_INTERESTS, PUBLIC_TASK, LEGITIMATE_INTERESTS]]')
       })
       it('triggers an event', async () => {
         await request(app).post('/events').send(body)
