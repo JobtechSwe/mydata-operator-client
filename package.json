@@ -28,6 +28,7 @@
   "homepage": "https://github.com/JobtechSwe/mydata-operator-client#readme",
   "dependencies": {
     "axios": "^0.18.0",
+    "http-errors": "^1.7.1",
     "joi": "^14.3.0",
     "jsonwebtoken": "^8.4.0",
     "jwks-provider": "^0.1.0",

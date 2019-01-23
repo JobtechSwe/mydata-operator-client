@@ -31,6 +31,9 @@ describe('routes', () => {
     app = express()
     app.use(express.json())
     app.use(client.routes)
+    app.use(({ status, message }, req, res, next) => {
+      res.status(status).send({ message })
+    })
   })
   describe('/jwks', () => {
     it('contains the client_key', async () => {
@@ -87,20 +90,147 @@ describe('routes', () => {
     })
   })
   describe('/events', () => {
-    it('triggers an event', async () => {
-      const listener = jest.fn()
-      client.events.on('CONSENT_APPROVED', listener)
-
-      const event = {
+    let body
+    beforeEach(() => {
+      body = {
         type: 'CONSENT_APPROVED',
         payload: {
-          id: '566c9327-b1cb-4e5b-8633-3b1f1fbbe9ad',
-          scope: ['Foo']
+          consentId: '566c9327-b1cb-4e5b-8633-3b1f1fbbe9ad',
+          publicKey: Buffer.from('some key', 'utf8').toString('base64'),
+          scope: [{
+            domain: 'cv.work',
+            area: 'education',
+            description: 'Stuff',
+            permissions: ['read', 'write'],
+            purpose: 'because',
+            lawfulBasis: 'consent'
+          }]
         }
       }
-      await request(app).post('/events').send(event)
+    })
+    it('throws if body does not contain `type`', async () => {
+      body.type = undefined
+      const response = await request(app).post('/events').send(body)
 
-      expect(listener).toHaveBeenCalledWith(event.payload)
+      expect(response.status).toEqual(400)
+      expect(response.body.message).toMatch('["type" is required]')
+    })
+    it('throws if body does not contain `payload`', async () => {
+      body.payload = undefined
+      const response = await request(app).post('/events').send(body)
+
+      expect(response.status).toEqual(400)
+      expect(response.body.message).toMatch('["payload" is required]')
+    })
+    it('throws if event type is unknown', async () => {
+      body.type = 'SNEL_HEST'
+      const response = await request(app).post('/events').send(body)
+
+      expect(response.status).toEqual(400)
+      expect(response.body.message).toMatch('["type" must be one of [CONSENT_APPROVED]]')
+    })
+    describe('[CONSENT_APPROVED]', () => {
+      let listener
+      beforeEach(() => {
+        listener = jest.fn()
+        client.events.on('CONSENT_APPROVED', listener)
+      })
+      it('throws if `consentId` is missing from payload', async () => {
+        body.payload.consentId = undefined
+        const response = await request(app).post('/events').send(body)
+
+        expect(response.status).toEqual(400)
+        expect(response.body.message).toMatch('["consentId" is required]')
+      })
+      it('throws if `publicKey` is missing from payload', async () => {
+        body.payload.publicKey = undefined
+        const response = await request(app).post('/events').send(body)
+
+        expect(response.status).toEqual(400)
+        expect(response.body.message).toMatch('["publicKey" is required]')
+      })
+      it('throws if `scope` is missing from payload', async () => {
+        body.payload.scope = undefined
+        const response = await request(app).post('/events').send(body)
+
+        expect(response.status).toEqual(400)
+        expect(response.body.message).toMatch('["scope" is required]')
+      })
+      it('throws if `scope` is empty', async () => {
+        body.payload.scope = []
+        const response = await request(app).post('/events').send(body)
+
+        expect(response.status).toEqual(400)
+        expect(response.body.message).toMatch('["scope" must contain at least 1 items]')
+      })
+      it('throws if `scope` does not contain `domain`', async () => {
+        body.payload.scope[0].domain = undefined
+        const response = await request(app).post('/events').send(body)
+
+        expect(response.status).toEqual(400)
+        expect(response.body.message).toMatch('["domain" is required]')
+      })
+      it('throws if `scope` does not contain `area`', async () => {
+        body.payload.scope[0].area = undefined
+        const response = await request(app).post('/events').send(body)
+
+        expect(response.status).toEqual(400)
+        expect(response.body.message).toMatch('["area" is required]')
+      })
+      it('throws if `scope` does not contain `description`', async () => {
+        body.payload.scope[0].description = undefined
+        const response = await request(app).post('/events').send(body)
+
+        expect(response.status).toEqual(400)
+        expect(response.body.message).toMatch('["description" is required]')
+      })
+      it('throws if `scope` does not contain `permissions`', async () => {
+        body.payload.scope[0].permissions = undefined
+        const response = await request(app).post('/events').send(body)
+
+        expect(response.status).toEqual(400)
+        expect(response.body.message).toMatch('["permissions" is required]')
+      })
+      it('throws if `scope` `permissions` is empty', async () => {
+        body.payload.scope[0].permissions = []
+        const response = await request(app).post('/events').send(body)
+
+        expect(response.status).toEqual(400)
+        expect(response.body.message).toMatch('["permissions" must contain at least 1 items]')
+      })
+      it('throws if `scope` `permissions` contains invalid values', async () => {
+        body.payload.scope[0].permissions.push('derp')
+        const response = await request(app).post('/events').send(body)
+
+        expect(response.status).toEqual(400)
+        expect(response.body.message).toMatch('must be one of [read, write]')
+      })
+      it('throws if `scope` does not contain `purpose`', async () => {
+        body.payload.scope[0].purpose = undefined
+        const response = await request(app).post('/events').send(body)
+
+        expect(response.status).toEqual(400)
+        expect(response.body.message).toMatch('["purpose" is required]')
+      })
+      it('throws if `scope` does not contain `lawfulBasis`', async () => {
+        body.payload.scope[0].lawfulBasis = undefined
+        const response = await request(app).post('/events').send(body)
+
+        expect(response.status).toEqual(400)
+        expect(response.body.message).toMatch('["lawfulBasis" is required]')
+      })
+      it('throws if `scope` `lawfulBasis` has invalid value', async () => {
+        body.payload.scope[0].lawfulBasis = 'fish'
+        const response = await request(app).post('/events').send(body)
+
+        expect(response.status).toEqual(400)
+        expect(response.body.message).toMatch('["lawfulBasis" must be one of [consent, legitimateInterests, publicInterest, contractualNecessity, legalObligations, vitalInterests]]')
+      })
+      it('triggers an event', async () => {
+        await request(app).post('/events').send(body)
+
+        expect(listener).toHaveBeenCalledWith(body.payload)
+      })
     })
   })
 })
