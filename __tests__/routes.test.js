@@ -112,7 +112,8 @@ describe('routes', () => {
         type: 'CONSENT_APPROVED',
         payload: {
           consentId: '566c9327-b1cb-4e5b-8633-3b1f1fbbe9ad',
-          publicKey: Buffer.from('some key', 'utf8').toString('base64'),
+          consentRequestId: 'a75db04b-ed3a-47e4-bf6a-fa0eb1e61ed1',
+          accountKey: Buffer.from('some key', 'utf8').toString('base64'),
           scope: [{
             domain: 'cv.work',
             area: 'education',
@@ -143,7 +144,7 @@ describe('routes', () => {
       const response = await request(app).post('/events').send(body)
 
       expect(response.status).toEqual(400)
-      expect(response.body.message).toMatch('["type" must be one of [CONSENT_APPROVED]]')
+      expect(response.body.message).toMatch('["type" must be one of [CONSENT_APPROVED')
     })
     describe('[CONSENT_APPROVED]', () => {
       let listener
@@ -158,12 +159,12 @@ describe('routes', () => {
         expect(response.status).toEqual(400)
         expect(response.body.message).toMatch('["consentId" is required]')
       })
-      it('throws if `publicKey` is missing from payload', async () => {
-        body.payload.publicKey = undefined
+      it('throws if `accountKey` is missing from payload', async () => {
+        body.payload.accountKey = undefined
         const response = await request(app).post('/events').send(body)
 
         expect(response.status).toEqual(400)
-        expect(response.body.message).toMatch('["publicKey" is required]')
+        expect(response.body.message).toMatch('["accountKey" is required]')
       })
       it('throws if `scope` is missing from payload', async () => {
         body.payload.scope = undefined

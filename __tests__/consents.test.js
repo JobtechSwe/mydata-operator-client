@@ -5,14 +5,16 @@ const axios = require('axios')
 jest.mock('axios')
 
 describe('consents', () => {
-  let client, dummyRequest, dummyResponse
+  let clientKeys, client, dummyRequest, dummyResponse
 
-  beforeEach(() => {
-    const clientKeys = generateKeyPairSync('rsa', {
+  beforeAll(() => {
+    clientKeys = generateKeyPairSync('rsa', {
       modulusLength: 1024,
       publicKeyEncoding: { type: 'pkcs1', format: 'pem' },
       privateKeyEncoding: { type: 'pkcs1', format: 'pem' }
     })
+  })
+  beforeEach(() => {
     const config = {
       displayName: 'CV app',
       description: 'A CV app',
