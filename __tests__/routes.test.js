@@ -113,6 +113,7 @@ describe('routes', () => {
         payload: {
           consentId: '566c9327-b1cb-4e5b-8633-3b1f1fbbe9ad',
           consentRequestId: 'a75db04b-ed3a-47e4-bf6a-fa0eb1e61ed1',
+          consentEncryptionKeyId: 'enc_20190128154632',
           accountKey: Buffer.from('some key', 'utf8').toString('base64'),
           scope: [{
             domain: 'cv.work',
@@ -158,6 +159,20 @@ describe('routes', () => {
 
         expect(response.status).toEqual(400)
         expect(response.body.message).toMatch('["consentId" is required]')
+      })
+      it('throws if `consentRequestId` is missing from payload', async () => {
+        body.payload.consentRequestId = undefined
+        const response = await request(app).post('/events').send(body)
+
+        expect(response.status).toEqual(400)
+        expect(response.body.message).toMatch('["consentRequestId" is required]')
+      })
+      it('throws if `consentEncryptionKeyId` is missing from payload', async () => {
+        body.payload.consentEncryptionKeyId = undefined
+        const response = await request(app).post('/events').send(body)
+
+        expect(response.status).toEqual(400)
+        expect(response.body.message).toMatch('["consentEncryptionKeyId" is required]')
       })
       it('throws if `accountKey` is missing from payload', async () => {
         body.payload.accountKey = undefined

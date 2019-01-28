@@ -12,7 +12,9 @@ describe('KeyProvider', () => {
     keyStore = {
       load: jest.fn().mockName('load').mockResolvedValue([]),
       save: jest.fn().mockName('save').mockResolvedValue({}),
-      remove: jest.fn().mockName('save').mockResolvedValue()
+      saveTemp: jest.fn().mockName('saveTemp').mockResolvedValue({}),
+      remove: jest.fn().mockName('remove').mockResolvedValue(),
+      removeTemp: jest.fn().mockName('removeTemp').mockResolvedValue()
     }
     keyProvider = new KeyProvider(clientKeys, keyStore, { modulusLength: 1024 })
   })
@@ -58,10 +60,36 @@ describe('KeyProvider', () => {
       })
     })
   })
+  describe('#generateTemp', () => {
+    it('saves generated keys', async () => {
+      await keyProvider.generateTemp({ use: 'enc' }, 100)
+      expect(keyStore.saveTemp).toHaveBeenCalledWith({
+        publicKey: expect.any(String),
+        privateKey: expect.any(String),
+        use: 'enc',
+        kid: expect.any(String)
+      }, 100)
+    })
+    it('returns the generated keys', async () => {
+      const result = await keyProvider.generateTemp({ use: 'enc' }, 100)
+      expect(result).toEqual({
+        publicKey: expect.any(String),
+        privateKey: expect.any(String),
+        use: 'enc',
+        kid: expect.any(String)
+      })
+    })
+  })
   describe('#remove', () => {
     it('removes the key with the specified kid', async () => {
       await keyProvider.remove('abcd')
       expect(keyStore.remove).toHaveBeenCalledWith('abcd')
+    })
+  })
+  describe('#removeTemp', () => {
+    it('removes the temp key with the specified kid', async () => {
+      await keyProvider.removeTemp('abcd')
+      expect(keyStore.removeTemp).toHaveBeenCalledWith('abcd')
     })
   })
   describe('#jwksKeyList', () => {

@@ -1,6 +1,7 @@
 const createClient = require('../lib/client')
 const MemoryKeyStore = require('../lib/memoryKeyStore')
 const { generateKeyPairSync } = require('crypto')
+const { v4 } = require('uuid')
 const axios = require('axios')
 jest.mock('axios')
 
@@ -27,30 +28,6 @@ describe('consents', () => {
       keyOptions: { modulusLength: 1024 }
     }
     client = createClient(config)
-
-    dummyRequest = {
-      scope:
-        [{
-          domain: 'localhost:4000',
-          area: 'cv',
-          description:
-            'A list of your work experiences, educations, language proficiencies and so on that you have entered in the service.',
-          permissions: ['WRITE'],
-          purpose: 'In order to create a CV using our website.',
-          lawfulBasis: 'CONSENT',
-          required: true
-        }],
-      expiry: 1549704812
-    }
-
-    dummyResponse = {
-      data: {
-        data: {
-          code: '4445',
-          expires: 345678
-        }
-      }
-    }
   })
   afterEach(() => {
     axios.post.mockClear()
@@ -58,6 +35,30 @@ describe('consents', () => {
 
   describe('#request', () => {
     beforeEach(() => {
+      dummyRequest = {
+        scope:
+          [{
+            domain: 'localhost:4000',
+            area: 'cv',
+            description:
+              'A list of your work experiences, educations, language proficiencies and so on that you have entered in the service.',
+            permissions: ['WRITE'],
+            purpose: 'In order to create a CV using our website.',
+            lawfulBasis: 'CONSENT',
+            required: true
+          }],
+        expiry: 1549704812
+      }
+
+      dummyResponse = {
+        data: {
+          data: {
+            code: '4445',
+            expires: 345678
+          }
+        }
+      }
+
       axios.post.mockResolvedValue(dummyResponse)
     })
     describe('validation', () => {
@@ -106,6 +107,31 @@ describe('consents', () => {
       const { code } = await client.consents.request(dummyRequest)
 
       expect(code).toBe('4445')
+    })
+  })
+  describe('#approve', () => {
+    let dummyApproval
+    beforeEach(() => {
+      dummyApproval = {
+        consentRequestId: v4(),
+        consentId: v4(),
+        consentEncryptionKeyId: 'enc_20190128154632',
+        accountKey: v4(),
+        scope:
+          [{
+            domain: 'localhost:4000',
+            area: 'cv',
+            description:
+              'A list of your work experiences, educations, language proficiencies and so on that you have entered in the service.',
+            permissions: ['WRITE'],
+            purpose: 'In order to create a CV using our website.',
+            lawfulBasis: 'CONSENT',
+            required: true
+          }]
+      }
+    })
+    it('works', async () => {
+      client.consents.approve(dummyApproval)
     })
   })
 })

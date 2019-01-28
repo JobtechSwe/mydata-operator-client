@@ -4,6 +4,11 @@ describe('MemoryKeyStore', () => {
   let storage
   beforeEach(() => {
     storage = new MemoryKeyStore()
+    jest.useFakeTimers()
+  })
+  afterEach(() => {
+    jest.runAllTimers()
+    jest.clearAllTimers()
   })
   it('returns keys', async () => {
     expect(await storage.load({ use: 'enc' })).toEqual([])
@@ -44,5 +49,23 @@ describe('MemoryKeyStore', () => {
     await storage.save(encKey)
     await storage.remove('sig1')
     expect(await storage.load({ use: 'sig' })).toEqual([sigKey2])
+  })
+  it('stores temporary keys', async () => {
+    const encKey = { use: 'enc', kid: 'enc1' }
+    await storage.saveTemp(encKey, 1)
+
+    const keys = await storage.load({ kid: 'enc1' })
+    expect(keys).toHaveLength(1)
+    expect(keys[0]).toEqual(encKey)
+  })
+  it('auto deletes temporary keys after ttl', async () => {
+    const encKey = { use: 'enc', kid: 'enc1' }
+    await storage.saveTemp(encKey, 1000)
+
+    let keys = await storage.load({ kid: 'enc1' })
+    expect(keys).toHaveLength(1)
+    jest.advanceTimersByTime(1000)
+    keys = await storage.load({ kid: 'enc1' })
+    expect(keys).toHaveLength(0)
   })
 })
