@@ -15,7 +15,7 @@ describe('client', () => {
     })
     config = {
       displayName: 'CV app',
-      description: 'A CV app',
+      description: 'A CV app with a description which is at least 10 chars',
       clientId: 'mycv.work',
       operator: 'https://smoothoperator.work',
       jwksUrl: '/jwks',
@@ -25,6 +25,7 @@ describe('client', () => {
       keyOptions: { modulusLength: 1024 }
     }
   })
+
   afterEach(() => {
     axios.post.mockClear()
   })
@@ -36,9 +37,11 @@ describe('client', () => {
       client = createClient(config)
       setTimeout(() => done(), 10)
     })
+
     it('does _not_ call the operator to register until told so', () => {
       expect(axios.post).not.toHaveBeenCalled()
     })
+
     it('sets sensible defaults', () => {
       const {
         displayName,
@@ -60,17 +63,49 @@ describe('client', () => {
       expect(client.config.eventsUrl).toEqual('/events')
       expect(client.config.alg).toEqual('RSA-SHA512')
     })
+
+    it('throws if clientId is missing', () => {
+      config.clientId = undefined
+      expect(() => createClient(config)).toThrow()
+    })
+
+    it('throws if displayName is missing', () => {
+      config.displayName = undefined
+      expect(() => createClient(config)).toThrow()
+    })
+
+    it('throws if operator is missing', () => {
+      config.operator = undefined
+      expect(() => createClient(config)).toThrow()
+    })
+
+    it('throws if operator is not a valid uri', () => {
+      config.operator = 'fobara87as9duadh'
+      expect(() => createClient(config)).toThrow()
+    })
+
+    it('throws if keyStore is missing', () => {
+      config.keyStore = undefined
+      expect(() => createClient(config)).toThrow()
+    })
+
+    it('throws if clientKeys is missing', () => {
+      config.clientKeys = undefined
+      expect(() => createClient(config)).toThrow()
+    })
+
     describe('#connect()', () => {
       it('calls the operator to register the client service', async () => {
         await client.connect()
         expect(axios.post).toHaveBeenCalledWith('https://smoothoperator.work/api/clients', expect.any(Object))
       })
+
       it('sends correct parameters', async () => {
         await client.connect()
         expect(axios.post).toHaveBeenCalledWith(expect.any(String), {
           data: {
             displayName: 'CV app',
-            description: 'A CV app',
+            description: 'A CV app with a description which is at least 10 chars',
             clientId: 'mycv.work',
             jwksUrl: '/jwks',
             eventsUrl: '/events'
@@ -82,6 +117,7 @@ describe('client', () => {
           }
         })
       })
+
       it('calls events.emit with payload', async () => {
         client.events.emit = jest.fn()
         await client.connect()
@@ -106,14 +142,16 @@ describe('client', () => {
       const client = createClient(config)
       await client.connect()
     })
+
     it('calls the operator to register the client service', () => {
       expect(axios.post).toHaveBeenCalledWith('https://smoothoperator.work/api/clients', expect.any(Object))
     })
+
     it('sends correct parameters', () => {
       expect(axios.post).toHaveBeenCalledWith(expect.any(String), {
         data: {
           displayName: 'CV app',
-          description: 'A CV app',
+          description: 'A CV app with a description which is at least 10 chars',
           clientId: 'mycv.work',
           jwksUrl: '/jwks',
           eventsUrl: '/events',
@@ -126,6 +164,7 @@ describe('client', () => {
         }
       })
     })
+
     it('signs the payload', () => {
       createClient(config)
       const [, { data, signature }] = axios.post.mock.calls[0]

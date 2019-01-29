@@ -18,7 +18,7 @@ describe('consents', () => {
   beforeEach(() => {
     const config = {
       displayName: 'CV app',
-      description: 'A CV app',
+      description: 'A CV app with a description which is longer than 10 chars',
       clientId: 'mycv.work',
       operator: 'https://smoothoperator.work',
       jwksUrl: '/jwks',
