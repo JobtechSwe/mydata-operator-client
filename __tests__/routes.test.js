@@ -115,7 +115,7 @@ describe('routes', () => {
           consentRequestId: 'a75db04b-ed3a-47e4-bf6a-fa0eb1e61ed1',
           consentEncryptionKeyId: 'enc_20190128154632',
           accountKey: Buffer.from('some key', 'utf8').toString('base64'),
-          jwt: '7yasd87ya9da98sdu98adsu',
+          accessToken: '7yasd87ya9da98sdu98adsu',
           scope: [{
             domain: 'cv.work',
             area: 'education',
@@ -154,12 +154,12 @@ describe('routes', () => {
         listener = jest.fn()
         client.events.on('CONSENT_APPROVED', listener)
       })
-      it('throws if `jwt` is missing from payload', async () => {
-        body.payload.jwt = undefined
+      it('throws if `accessToken` is missing from payload', async () => {
+        body.payload.accessToken = undefined
         const response = await request(app).post('/events').send(body)
 
         expect(response.status).toEqual(400)
-        expect(response.body.message).toMatch('["jwt" is required]')
+        expect(response.body.message).toMatch('["accessToken" is required]')
       })
       it('throws if `consentId` is missing from payload', async () => {
         body.payload.consentId = undefined
