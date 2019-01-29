@@ -9,7 +9,7 @@ describe('data', () => {
     let get
     beforeEach(() => {
       axios.get = jest.fn()
-      config = { operatorUrl: 'http://localhost:3000' }
+      config = { operator: 'http://localhost:3000' }
       accessToken = 'asuidiuasduaisd'
 
       get = dataService({ config })
@@ -39,7 +39,7 @@ describe('data', () => {
     let set
     beforeEach(() => {
       axios.post = jest.fn()
-      config = { operatorUrl: 'http://localhost:3000' }
+      config = { operator: 'http://localhost:3000' }
       accessToken = 'lkfdgf'
       set = dataService({ config })
         .auth(accessToken)
