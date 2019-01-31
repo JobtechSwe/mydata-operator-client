@@ -5,53 +5,73 @@ jest.mock('axios')
 describe('data', () => {
   let config, accessToken
 
-  describe('#get', () => {
-    let get
+  describe('#read', () => {
+    let read
     beforeEach(() => {
       axios.get = jest.fn()
       config = { operator: 'http://localhost:3000' }
       accessToken = 'asuidiuasduaisd'
 
-      get = dataService({ config })
+      read = dataService({ config })
         .auth(accessToken)
-        .get
+        .read
     })
 
-    it('calls axios.get with correct url and header', async () => {
+    it('calls axios.get with correct url and header for root', async () => {
       axios.get.mockResolvedValue({ data: { foo: 'bar' } })
-      await get({ domain: 'cv', area: '/foo' })
+      await read({})
 
       expect(axios.get).toHaveBeenCalledTimes(1)
-      expect(axios.get).toHaveBeenCalledWith('http://localhost:3000/api/data/cv',
+      expect(axios.get).toHaveBeenCalledWith(`http://localhost:3000/api/data/`,
+        { headers: { 'Authorization': 'Bearer asuidiuasduaisd' } })
+    })
+
+    it('calls axios.get with correct url and header for domain', async () => {
+      axios.get.mockResolvedValue({ data: { foo: 'bar' } })
+      await read({ domain: 'cv.work:4000' })
+
+      expect(axios.get).toHaveBeenCalledTimes(1)
+      expect(axios.get).toHaveBeenCalledWith(`http://localhost:3000/api/data/${encodeURIComponent('cv.work:4000')}`,
+        { headers: { 'Authorization': 'Bearer asuidiuasduaisd' } })
+    })
+
+    it('calls axios.get with correct url and header for domain and area', async () => {
+      axios.get.mockResolvedValue({ data: { foo: 'bar' } })
+      await read({ domain: 'cv.work:4000', area: 'cv' })
+
+      expect(axios.get).toHaveBeenCalledTimes(1)
+      expect(axios.get).toHaveBeenCalledWith(`http://localhost:3000/api/data/${encodeURIComponent('cv.work:4000')}/${encodeURIComponent('cv')}`,
         { headers: { 'Authorization': 'Bearer asuidiuasduaisd' } })
     })
 
     it('returns data', async () => {
       axios.get.mockResolvedValue({ data: { foo: 'bar' } })
 
-      const result = await get({ domain: 'cv', area: '/foo' })
+      const result = await read({ domain: 'cv', area: '/foo' })
 
       expect(result).toEqual({ foo: 'bar' })
     })
   })
 
-  describe('#set', () => {
-    let set
+  describe('#write', () => {
+    let write
     beforeEach(() => {
       axios.post = jest.fn()
       config = { operator: 'http://localhost:3000' }
       accessToken = 'lkfdgf'
-      set = dataService({ config })
+      write = dataService({ config })
         .auth(accessToken)
-        .set
+        .write
     })
 
     it('calls axios.post with correct url, data and header', async () => {
       const data = { foo: 'bar' }
-      await set({ domain: 'cv', area: '/foo', data })
+      await write({ domain: 'cv.work:4000', area: 'cv', data })
 
       expect(axios.post).toHaveBeenCalledTimes(1)
-      expect(axios.post).toHaveBeenCalledWith('http://localhost:3000/api/data/cv', { foo: 'bar' },
+      expect(axios.post).toHaveBeenCalledWith(
+        `http://localhost:3000/api/data/${encodeURIComponent('cv.work:4000')}/${encodeURIComponent('cv')}`,
+        { foo: 'bar' },
         { headers: { 'Authorization': 'Bearer lkfdgf' } }
       )
     })

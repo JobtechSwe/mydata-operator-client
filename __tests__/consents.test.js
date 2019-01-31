@@ -109,7 +109,7 @@ describe('consents', () => {
       expect(code).toBe('4445')
     })
   })
-  describe.skip('#approve', () => { // TODO: Rename to onApproved ?
+  describe.skip('#onApprove', () => { // TODO: Rename to onApproved ?
     let dummyApproval
     beforeEach(() => {
       dummyApproval = {
@@ -131,7 +131,7 @@ describe('consents', () => {
       }
     })
     it('works', async () => {
-      client.consents.approve(dummyApproval)
+      client.consents.onApprove(dummyApproval)
     })
   })
 })
