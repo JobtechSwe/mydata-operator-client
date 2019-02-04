@@ -74,8 +74,7 @@ describe('crypto', () => {
     it('accepts base64', async () => {
       const key = await crypto.generateDocumentKey('base64')
       const cipher = await crypto.encryptDocument(key, 'foo: bar')
-      expect(typeof cipher).toEqual('string')
-      expect(Buffer.from(cipher, 'base64')).toBeInstanceOf(Buffer)
+      expect(cipher).toBeInstanceOf(Buffer)
     })
     it('returns base64', async () => {
       const key = await crypto.generateDocumentKey()

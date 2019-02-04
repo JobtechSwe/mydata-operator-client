@@ -5,6 +5,10 @@ const request = require('supertest')
 const express = require('express')
 jest.mock('axios')
 
+function base64 (txt) {
+  return Buffer.from(txt, 'utf8').toString('base64')
+}
+
 describe('routes', () => {
   let clientKeys, client, app
 
@@ -113,8 +117,6 @@ describe('routes', () => {
         payload: {
           consentId: '566c9327-b1cb-4e5b-8633-3b1f1fbbe9ad',
           consentRequestId: 'a75db04b-ed3a-47e4-bf6a-fa0eb1e61ed1',
-          consentEncryptionKeyId: 'enc_20190128154632',
-          accountKey: Buffer.from('some key', 'utf8').toString('base64'),
           accessToken: '7yasd87ya9da98sdu98adsu',
           scope: [{
             domain: 'cv.work',
@@ -122,8 +124,16 @@ describe('routes', () => {
             description: 'Stuff',
             permissions: ['READ', 'WRITE'],
             purpose: 'because',
-            lawfulBasis: 'CONSENT'
-          }]
+            lawfulBasis: 'CONSENT',
+            readKeys: [
+              'mydata://566c9327-b1cb-4e5b-8633-3b1f1fbbe9ad',
+              'cv.work/jwks/enc_20190128154632'
+            ]
+          }],
+          keys: {
+            'mydata://566c9327-b1cb-4e5b-8633-3b1f1fbbe9ad': base64('foo'),
+            'cv.work/jwks/enc_20190128154632': base64('bar')
+          }
         }
       }
     })
@@ -174,20 +184,6 @@ describe('routes', () => {
 
         expect(response.status).toEqual(400)
         expect(response.body.message).toMatch('["consentRequestId" is required]')
-      })
-      it('throws if `consentEncryptionKeyId` is missing from payload', async () => {
-        body.payload.consentEncryptionKeyId = undefined
-        const response = await request(app).post('/events').send(body)
-
-        expect(response.status).toEqual(400)
-        expect(response.body.message).toMatch('["consentEncryptionKeyId" is required]')
-      })
-      it('throws if `accountKey` is missing from payload', async () => {
-        body.payload.accountKey = undefined
-        const response = await request(app).post('/events').send(body)
-
-        expect(response.status).toEqual(400)
-        expect(response.body.message).toMatch('["accountKey" is required]')
       })
       it('throws if `scope` is missing from payload', async () => {
         body.payload.scope = undefined
@@ -265,6 +261,28 @@ describe('routes', () => {
 
         expect(response.status).toEqual(400)
         expect(response.body.message).toMatch('["lawfulBasis" must be one of [CONSENT, CONTRACT, LEGAL_OBLIGATION, VITAL_INTERESTS, PUBLIC_TASK, LEGITIMATE_INTERESTS]]')
+      })
+      it('throws if `scope` does not contain `readKeys`', async () => {
+        body.payload.scope[0].readKeys = undefined
+        const response = await request(app).post('/events').send(body)
+
+        expect(response.status).toEqual(400)
+        expect(response.body.message).toMatch('["readKeys" is required]')
+      })
+      it('throws if `scope` `readKeys` is empty', async () => {
+        body.payload.scope[0].readKeys = []
+        const response = await request(app).post('/events').send(body)
+
+        expect(response.status).toEqual(400)
+        expect(response.body.message).toMatch('["readKeys" must contain at least 2 items]')
+      })
+
+      it('throws if `keys` is missing from payload', async () => {
+        body.payload.keys = undefined
+        const response = await request(app).post('/events').send(body)
+
+        expect(response.status).toEqual(400)
+        expect(response.body.message).toMatch('["keys" is required]')
       })
       it('triggers an event', async () => {
         await request(app).post('/events').send(body)
