@@ -12,7 +12,7 @@ const operator = require('@mydata/operator-client')
 const config = {
   displayName: 'The name of your service',
   description: 'A nice description of your fantastic service'
-  clientId: 'mycv.work', // Application domain without protocol
+  clientId: 'https://mycv.work', // Application domain with protocol
   operatorUrl: 'https://smoothoperator.work', // URL of Operator
   clientKeys: {
     publicKey: '',
