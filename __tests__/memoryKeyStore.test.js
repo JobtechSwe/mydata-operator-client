@@ -11,61 +11,79 @@ describe('MemoryKeyStore', () => {
     jest.clearAllTimers()
   })
   it('returns keys', async () => {
-    expect(await storage.load({ use: 'enc' })).toEqual([])
-    expect(await storage.load({ use: 'sig' })).toEqual([])
+    expect(await storage.getKeys('enc')).toEqual([])
+    expect(await storage.getKeys('sig')).toEqual([])
+    expect(await storage.getKey('kid')).toBeFalsy()
   })
   it('stores an enc key and returns it', async () => {
     const key = { use: 'enc', kid: 'enc1' }
-    await storage.save(key)
-    expect(await storage.load({ use: 'enc' })).toEqual([key])
+    await storage.saveKey(key)
+    expect(await storage.getKeys('enc')).toEqual([key])
   })
   it('stores a sig key and returns it', async () => {
     const key = { use: 'sig', kid: 'sig1' }
-    await storage.save(key)
-    expect(await storage.load({ use: 'sig' })).toEqual([key])
+    await storage.saveKey(key)
+    expect(await storage.getKeys('sig')).toEqual([key])
   })
   it('filters on use', async () => {
     const sigKey = { use: 'sig', kid: 'sig1' }
     const encKey = { use: 'enc', kid: 'enc1' }
-    await storage.save(sigKey)
-    await storage.save(encKey)
-    expect(await storage.load({ use: 'sig' })).toEqual([sigKey])
-  })
-  it('filters on use and kid', async () => {
-    const sigKey1 = { use: 'sig', kid: 'sig1' }
-    const sigKey2 = { use: 'sig', kid: 'sig2' }
-    const encKey = { use: 'enc', kid: 'enc1' }
-    await storage.save(sigKey1)
-    await storage.save(sigKey2)
-    await storage.save(encKey)
-    expect(await storage.load({ use: 'sig', kid: 'sig2' })).toEqual([sigKey2])
+    await storage.saveKey(sigKey)
+    await storage.saveKey(encKey)
+    expect(await storage.getKeys('sig')).toEqual([sigKey])
   })
   it('removes on kid', async () => {
     const sigKey1 = { use: 'sig', kid: 'sig1' }
     const sigKey2 = { use: 'sig', kid: 'sig2' }
     const encKey = { use: 'enc', kid: 'enc1' }
-    await storage.save(sigKey1)
-    await storage.save(sigKey2)
-    await storage.save(encKey)
-    await storage.remove('sig1')
-    expect(await storage.load({ use: 'sig' })).toEqual([sigKey2])
+    await storage.saveKey(sigKey1)
+    await storage.saveKey(sigKey2)
+    await storage.saveKey(encKey)
+    await storage.removeKey('sig1')
+    expect(await storage.getKeys('sig')).toEqual([sigKey2])
   })
-  it('stores temporary keys', async () => {
+  it('auto deletes keys after ttl', async () => {
     const encKey = { use: 'enc', kid: 'enc1' }
-    await storage.saveTemp(encKey, 1)
+    await storage.saveKey(encKey, 1000)
 
-    const keys = await storage.load({ kid: 'enc1' })
-    expect(keys).toHaveLength(1)
-    expect(keys[0]).toEqual(encKey)
-  })
-  it('auto deletes temporary keys after ttl', async () => {
-    const encKey = { use: 'enc', kid: 'enc1' }
-    await storage.saveTemp(encKey, 1000)
+    jest.advanceTimersByTime(999)
+    let key = await storage.getKey('enc1')
+    expect(key).toBeTruthy()
 
-    let keys = await storage.load({ kid: 'enc1' })
-    expect(keys).toHaveLength(1)
     jest.advanceTimersByTime(1000)
-    keys = await storage.load({ kid: 'enc1' })
-    expect(keys).toHaveLength(0)
+    key = await storage.getKey('enc1')
+    expect(key).toBeFalsy()
+  })
+  it('updates ttl', async () => {
+    const encKey = { use: 'enc', kid: 'enc1' }
+    await storage.saveKey(encKey, 1000)
+
+    jest.advanceTimersByTime(999)
+    let key = await storage.getKey('enc1')
+    expect(key).toBeTruthy()
+
+    await storage.updateTTL(encKey.kid, 1000)
+
+    jest.advanceTimersByTime(999)
+    key = await storage.getKey('enc1')
+    expect(key).toBeTruthy()
+
+    jest.advanceTimersByTime(1000)
+    key = await storage.getKey('enc1')
+    expect(key).toBeFalsy()
+  })
+  it('updates ttl to null', async () => {
+    const encKey = { use: 'enc', kid: 'enc1' }
+    await storage.saveKey(encKey, 1000)
+
+    jest.advanceTimersByTime(999)
+    let key = await storage.getKey('enc1')
+    expect(key).toBeTruthy()
+
+    await storage.updateTTL(encKey.kid, null)
+
+    jest.advanceTimersByTime(2000)
+    key = await storage.getKey('enc1')
+    expect(key).toBeTruthy()
   })
 })

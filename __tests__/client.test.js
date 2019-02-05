@@ -16,10 +16,10 @@ describe('client', () => {
     config = {
       displayName: 'CV app',
       description: 'A CV app with a description which is at least 10 chars',
-      clientId: 'mycv.work',
+      clientId: 'https://mycv.work',
       operator: 'https://smoothoperator.work',
-      jwksUrl: '/jwks',
-      eventsUrl: '/events',
+      jwksPath: '/jwks',
+      eventsPath: '/events',
       clientKeys: clientKeys,
       keyStore: new MemoryKeyStore(),
       keyOptions: { modulusLength: 1024 }
@@ -59,8 +59,8 @@ describe('client', () => {
         clientKeys,
         keyStore
       })
-      expect(client.config.jwksUrl).toEqual('/jwks')
-      expect(client.config.eventsUrl).toEqual('/events')
+      expect(client.config.jwksPath).toEqual('/jwks')
+      expect(client.config.eventsPath).toEqual('/events')
       expect(client.config.alg).toEqual('RSA-SHA512')
     })
 
@@ -106,14 +106,14 @@ describe('client', () => {
           data: {
             displayName: 'CV app',
             description: 'A CV app with a description which is at least 10 chars',
-            clientId: 'mycv.work',
-            jwksUrl: '/jwks',
-            eventsUrl: '/events'
+            clientId: 'https://mycv.work',
+            jwksUrl: 'https://mycv.work/jwks',
+            eventsUrl: 'https://mycv.work/events'
           },
           signature: {
             data: expect.any(String),
             alg: 'RSA-SHA512',
-            kid: 'client_key'
+            kid: 'https://mycv.work/jwks/client_key'
           }
         })
       })
@@ -135,46 +135,6 @@ describe('client', () => {
       })
     })
   })
-  describe('unsafe createClient', () => {
-    beforeEach(async () => {
-      axios.post.mockResolvedValueOnce({})
-      config.unsafe = true
-      const client = createClient(config)
-      await client.connect()
-    })
-
-    it('calls the operator to register the client service', () => {
-      expect(axios.post).toHaveBeenCalledWith('https://smoothoperator.work/api/clients', expect.any(Object))
-    })
-
-    it('sends correct parameters', () => {
-      expect(axios.post).toHaveBeenCalledWith(expect.any(String), {
-        data: {
-          displayName: 'CV app',
-          description: 'A CV app with a description which is at least 10 chars',
-          clientId: 'mycv.work',
-          jwksUrl: '/jwks',
-          eventsUrl: '/events',
-          unsafe: true
-        },
-        signature: {
-          alg: 'RSA-SHA512',
-          data: expect.any(String),
-          kid: 'client_key'
-        }
-      })
-    })
-
-    it('signs the payload', () => {
-      createClient(config)
-      const [, { data, signature }] = axios.post.mock.calls[0]
-      const verified = createVerify(signature.alg)
-        .update(JSON.stringify(data))
-        .verify(clientKeys.publicKey, signature.data, 'base64')
-
-      expect(verified).toEqual(true)
-    })
-  })
 
   describe('#onConsentApproved', () => {
     it('removes key with matching kid from keystore', async () => {
@@ -182,14 +142,14 @@ describe('client', () => {
       const key = {
         kid: 'foo'
       }
-      await client.keyProvider.keyStore.save(key)
+      await client.keyProvider.keyStore.saveKey(key)
 
       const payload = { kid: 'foo' }
       client.events.emit('CONSENT_APPROVED', payload)
 
-      const res = await client.keyProvider.keyStore.load({ kid: 'foo' })
+      const result = await client.keyProvider.keyStore.getKey('foo')
 
-      expect(res).toEqual([])
+      expect(result).toBeFalsy()
     })
   })
 })

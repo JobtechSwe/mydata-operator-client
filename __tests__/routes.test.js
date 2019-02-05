@@ -23,10 +23,10 @@ describe('routes', () => {
     const config = {
       displayName: 'CV app',
       description: 'A CV app with a description that is at least 10 chars',
-      clientId: 'mycv.work',
+      clientId: 'http://mycv.work',
       operator: 'https://smoothoperator.work',
-      jwksUrl: '/jwks',
-      eventsUrl: '/events',
+      jwksPath: '/jwks',
+      eventsPath: '/events',
       clientKeys: clientKeys,
       keyStore: new MemoryKeyStore(),
       keyOptions: { modulusLength: 1024 }
@@ -46,7 +46,7 @@ describe('routes', () => {
       expect(res.body).toEqual({
         keys: [
           {
-            kid: 'client_key',
+            kid: 'http://mycv.work/jwks/client_key',
             alg: 'RS256',
             kty: 'RSA',
             use: 'sig',
@@ -57,16 +57,16 @@ describe('routes', () => {
       })
     })
 
-    it('contains client_key, enc keys and sig keys', async () => {
-      await client.keyProvider.generate({ use: 'enc' })
-      await client.keyProvider.generate({ use: 'sig' })
+    it('contains client_key and sig keys', async () => {
+      await client.keyProvider.generateKey({ use: 'enc' })
+      await client.keyProvider.generateKey({ use: 'sig' })
 
       const res = await request(app).get('/jwks')
 
       expect(res.body).toEqual({
         keys: [
           {
-            kid: 'client_key',
+            kid: 'http://mycv.work/jwks/client_key',
             alg: 'RS256',
             kty: 'RSA',
             use: 'sig',
@@ -74,15 +74,7 @@ describe('routes', () => {
             n: expect.any(String)
           },
           {
-            kid: expect.any(String),
-            alg: 'RS256',
-            kty: 'RSA',
-            use: 'enc',
-            e: 'AQAB',
-            n: expect.any(String)
-          },
-          {
-            kid: expect.any(String),
+            kid: expect.stringMatching(new RegExp('^http://mycv.work/jwks/sig_')),
             alg: 'RS256',
             kty: 'RSA',
             use: 'sig',
@@ -94,12 +86,12 @@ describe('routes', () => {
     })
     describe('/:kid', () => {
       it('contains client_key, enc keys and sig keys', async () => {
-        await client.keyProvider.generate({ use: 'enc', kid: 'test_key' })
+        await client.keyProvider.generateKey({ use: 'enc', kid: 'test_key' })
 
         const res = await request(app).get('/jwks/test_key')
 
         expect(res.body).toEqual({
-          kid: 'test_key',
+          kid: 'http://mycv.work/jwks/test_key',
           alg: 'RS256',
           kty: 'RSA',
           use: 'enc',

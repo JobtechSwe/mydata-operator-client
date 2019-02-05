@@ -19,10 +19,10 @@ describe('consents', () => {
     const config = {
       displayName: 'CV app',
       description: 'A CV app with a description which is longer than 10 chars',
-      clientId: 'mycv.work',
+      clientId: 'http://localhost:4000',
       operator: 'https://smoothoperator.work',
-      jwksUrl: '/jwks',
-      eventsUrl: '/events',
+      jwksPath: '/jwks',
+      eventsPath: '/events',
       clientKeys: clientKeys,
       keyStore: new MemoryKeyStore(),
       keyOptions: { modulusLength: 1024 }
@@ -38,14 +38,13 @@ describe('consents', () => {
       dummyRequest = {
         scope:
           [{
-            domain: 'localhost:4000',
+            domain: 'http://localhost:4000',
             area: 'cv',
             description:
               'A list of your work experiences, educations, language proficiencies and so on that you have entered in the service.',
             permissions: ['WRITE'],
             purpose: 'In order to create a CV using our website.',
-            lawfulBasis: 'CONSENT',
-            required: true
+            lawfulBasis: 'CONSENT'
           }],
         expiry: 1549704812
       }
@@ -92,12 +91,12 @@ describe('consents', () => {
       const expectedPayload = {
         data: {
           ...dummyRequest,
-          clientId: 'mycv.work',
-          kid: expect.any(String)
+          clientId: 'http://localhost:4000',
+          kid: expect.stringMatching(new RegExp('^http://localhost:4000/jwks/enc_'))
         },
         signature: {
           alg: 'RSA-SHA512',
-          kid: 'client_key',
+          kid: 'http://localhost:4000/jwks/client_key',
           data: expect.any(String)
         }
       }
