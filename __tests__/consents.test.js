@@ -1,21 +1,30 @@
 const createClient = require('../lib/client')
 const MemoryKeyStore = require('../lib/memoryKeyStore')
-const { generateKeyPairSync } = require('crypto')
+const { generateKeyPair } = require('crypto')
+const { promisify } = require('util')
 const { v4 } = require('uuid')
 const axios = require('axios')
+const { sign } = require('jsonwebtoken')
 jest.mock('axios')
 
-describe('consents', () => {
-  let clientKeys, client, dummyRequest, dummyResponse
+async function generateKeys () {
+  return promisify(generateKeyPair)('rsa', {
+    modulusLength: 1024,
+    publicKeyEncoding: { type: 'pkcs1', format: 'pem' },
+    privateKeyEncoding: { type: 'pkcs1', format: 'pem' }
+  })
+}
 
-  beforeAll(() => {
-    clientKeys = generateKeyPairSync('rsa', {
-      modulusLength: 1024,
-      publicKeyEncoding: { type: 'pkcs1', format: 'pem' },
-      privateKeyEncoding: { type: 'pkcs1', format: 'pem' }
-    })
+const base64 = (str) => Buffer.from(str, 'utf8').toString('base64')
+
+describe('consents', () => {
+  let clientKeys, client, keyStore, dummyRequest, dummyResponse
+
+  beforeAll(async () => {
+    clientKeys = await generateKeys()
   })
   beforeEach(() => {
+    keyStore = new MemoryKeyStore()
     const config = {
       displayName: 'CV app',
       description: 'A CV app with a description which is longer than 10 chars',
@@ -24,7 +33,7 @@ describe('consents', () => {
       jwksPath: '/jwks',
       eventsPath: '/events',
       clientKeys: clientKeys,
-      keyStore: new MemoryKeyStore(),
+      keyStore,
       keyOptions: { modulusLength: 1024 }
     }
     client = createClient(config)
@@ -108,29 +117,81 @@ describe('consents', () => {
       expect(code).toBe('4445')
     })
   })
-  describe.skip('#onApprove', () => { // TODO: Rename to onApproved ?
-    let dummyApproval
-    beforeEach(() => {
-      dummyApproval = {
+  describe('#onApprove', () => { // TODO: Rename to onApproved ?
+    let consent, accountKeys, consentKeys, readKeysGig
+    beforeEach(async () => {
+      accountKeys = await generateKeys()
+      consentKeys = await generateKeys()
+      readKeysGig = await generateKeys()
+      const consentId = v4()
+
+      accountKeys.kid = `${consentId}/account_key`
+      consentKeys.kid = 'http://localhost:4000/jwks/education'
+      readKeysGig.kid = 'http://gig.work/jwks/read'
+
+      keyStore.saveKey({
+        ...consentKeys,
+        use: 'enc'
+      }, 60000)
+
+      consent = {
+        consentId,
         consentRequestId: v4(),
-        consentId: v4(),
-        consentEncryptionKeyId: 'enc_20190128154632',
-        accountKey: v4(),
-        scope:
-          [{
-            domain: 'localhost:4000',
-            area: 'cv',
+        accessToken: sign({ data: { consentId } }, 'secret'),
+        scope: [
+          {
+            domain: 'http://localhost:4000',
+            area: 'education',
             description:
-              'A list of your work experiences, educations, language proficiencies and so on that you have entered in the service.',
-            permissions: ['WRITE'],
+              'A list of your educations that you have entered in the service.',
+            permissions: ['READ', 'WRITE'],
             purpose: 'In order to create a CV using our website.',
             lawfulBasis: 'CONSENT',
-            required: true
-          }]
+            readKeys: [
+              accountKeys.kid,
+              consentKeys.kid
+            ]
+          },
+          {
+            domain: 'http://localhost:4000',
+            area: 'experience',
+            description:
+              'A list of your experiences that you have entered in the service.',
+            permissions: ['READ'],
+            purpose: 'In order to create a CV using our website.',
+            lawfulBasis: 'CONSENT',
+            readKeys: [
+              accountKeys.kid,
+              consentKeys.kid,
+              readKeysGig.kid
+            ]
+          }
+        ],
+        keys: {
+          [accountKeys.kid]: base64(accountKeys.publicKey),
+          [consentKeys.kid]: base64(consentKeys.publicKey),
+          [readKeysGig.kid]: base64(readKeysGig.publicKey)
+        }
       }
     })
-    it('works', async () => {
-      client.consents.onApprove(dummyApproval)
+    it('saves the accountKey', async () => {
+      await client.consents.onApprove(consent)
+      const key = await keyStore.getKey(accountKeys.kid)
+      expect(key.publicKey).toEqual(accountKeys.publicKey)
+    })
+    it('saves the gigKey', async () => {
+      await client.consents.onApprove(consent)
+      const key = await keyStore.getKey(readKeysGig.kid)
+      expect(key.publicKey).toEqual(readKeysGig.publicKey)
+    })
+    it('updates ttl for own key', async () => {
+      expect(keyStore.getTTL(consentKeys.kid)).toBeGreaterThan(0)
+
+      await client.consents.onApprove(consent)
+      const keys = (await keyStore.getKeys('enc'))
+        .filter(k => k.kid === consentKeys.kid)
+      expect(keyStore.getTTL(consentKeys.kid)).toBeUndefined()
+      expect(keys).toHaveLength(1)
     })
   })
 })

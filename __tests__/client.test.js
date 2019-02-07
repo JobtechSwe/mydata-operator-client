@@ -135,21 +135,4 @@ describe('client', () => {
       })
     })
   })
-
-  describe('#onConsentApproved', () => {
-    it('removes key with matching kid from keystore', async () => {
-      const client = createClient(config)
-      const key = {
-        kid: 'foo'
-      }
-      await client.keyProvider.keyStore.saveKey(key)
-
-      const payload = { kid: 'foo' }
-      client.events.emit('CONSENT_APPROVED', payload)
-
-      const result = await client.keyProvider.keyStore.getKey('foo')
-
-      expect(result).toBeFalsy()
-    })
-  })
 })
